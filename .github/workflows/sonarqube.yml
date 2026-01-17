@@ -29,7 +29,7 @@ jobs:
             pip install --upgrade pip
 
         - name: SonarQube Scan (PR -No gate enforcement)
-          uses: SonarSource/sonarcloud-github-action@v4.1.1
+          uses: SonarSource/sonarcloud-github-action@v5.0.0
           env:
             SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           with:
@@ -62,7 +62,7 @@ jobs:
             python-version: '3.11'
 
         - name: SonarQube Scan (Main Quality Gate)
-          uses: SonarSource/sonarcloud-github-action@v4.1.1
+          uses: SonarSource/sonarcloud-github-action@v5.0.0
           env:
             SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           with:
