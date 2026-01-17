@@ -24,9 +24,24 @@ jobs:
           with:
             python-version: '3.11'
         
-        - name: Install dependencies
+        - name: Install test dependencies
           run: |
-            pip install --upgrade pip
+            pip install -r requirements.txt
+
+        - name: Run tests with coverage
+          run: |
+            coverage run --source=. -m pytest
+            coverage xml -o coverage.xml
+        # 👇 ADD THIS STEP (TEMPORARY)
+        - name: Sanity check - coverage file exists
+          run: |
+            echo "Current directory:"
+            pwd
+            echo "Listing files:"
+            ls -l
+            echo "Coverage file details:"
+            ls -l coverage.xml
+
 
         - name: SonarQube Scan (PR -No gate enforcement)
           uses: SonarSource/sonarcloud-github-action@v5.0.0
@@ -40,10 +55,12 @@ jobs:
               -Dsonar.pullrequest.branch=${{ github.head_ref }}
               -Dsonar.pullrequest.base=${{ github.base_ref }}
               -Dsonar.sources=.
-              -Dsonar.projectBaseDir=.
+              -Dsonar.tests=tests
+              -Dsonar.test.inclusions=tests/**/*
+              -Dsonar.python.coverage.reportPaths=coverage.xml
               -Dsonar.python.version=3.11
               -Dsonar.qualitygate.wait=false
-              -Dsonar.exclusions=**/.venv/**,**/venv/**,**/.github/**
+
 
     sast-main:
       name: SonarQube SAST Scan (Quality Gate)
@@ -60,6 +77,12 @@ jobs:
           uses: actions/setup-python@v5
           with:
             python-version: '3.11'
+            
+        - name: Run tests with coverage
+          run: |
+            coverage run --source=. -m pytest
+            coverage xml -o coverage.xml
+
 
         - name: SonarQube Scan (Main Quality Gate)
           uses: SonarSource/sonarcloud-github-action@v5.0.0
@@ -73,5 +96,6 @@ jobs:
               -Dsonar.sources=.
               -Dsonar.projectBaseDir=.
               -Dsonar.python.version=3.11
+              -Dsonar.python.coverage.reportPaths=coverage.xml
               -Dsonar.qualitygate.wait=true
               -Dsonar.exclusions=**/.venv/**,**/venv/**,**/.github/**
