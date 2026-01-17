@@ -1,0 +1,77 @@
+name: CI - SAST -SonarQube
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request: 
+    branches: [ "main" ]
+    types: [opened, synchronize, reopened]
+
+jobs:
+    sast-pr:
+      name: SonarQube SAST Scan (PR Feedback)
+      if: github.event_name == 'pull_request'
+      runs-on: ubuntu-latest
+
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
+          with:
+            fetch-depth: 0
+
+        - name: Set up Python
+          uses: actions/setup-python@v5
+          with:
+            python-version: '3.11'
+        
+        - name: Install dependencies
+          run: |
+            pip install --upgrade pip
+
+        - name: SonarQube Scan (PR -No gate enforcement)
+          uses: SonarSource/sonarcloud-github-action@v4
+          env:
+            SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          with:
+            args: >
+              -Dsonar.projectKey=pdotnext_sonarqube-sast-python-lab
+              -Dsonar.organization=pdotnext
+              -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
+              -Dsonar.pullrequest.branch=${{ github.head_ref }}
+              -Dsonar.pullrequest.base=${{ github.base_ref }}
+              -Dsonar.sources=.
+              -Dsonar.projectBaseDir=.
+              -Dsonar.python.version=3.11
+              -Dsonar.qualitygate.wait=false
+              -Dsonar.exclusions=**/.venv/**,**/venv/**,**/.github/**
+
+    sast-main:
+      name: SonarQube SAST Scan (Quality Gate)
+      if: github.event_name == 'push'
+      runs-on: ubuntu-latest
+
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
+          with:
+            fetch-depth: 0
+
+        - name: Set up Python
+          uses: actions/setup-python@v5
+          with:
+            python-version: '3.11'
+
+        - name: SonarQube Scan (Main Quality Gate)
+          uses: SonarSource/sonarcloud-github-action@v4
+          env:
+            SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          with:
+            args: >
+              -Dsonar.projectKey=pdotnext_sonarqube-sast-python-lab
+              -Dsonar.organization=pdotnext
+              -Dsonar.branch.name=main
+              -Dsonar.sources=.
+              -Dsonar.projectBaseDir=.
+              -Dsonar.python.version=3.11
+              -Dsonar.qualitygate.wait=true
+              -Dsonar.exclusions=**/.venv/**,**/venv/**,**/.github/**
